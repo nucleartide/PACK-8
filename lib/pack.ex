@@ -1,18 +1,19 @@
 defmodule Pack do
-  @moduledoc """
-  Documentation for Pack.
-  """
+  def main(args) do
+    args
+    |> parse
+    |> process
+  end
 
-  @doc """
-  Hello world.
+  def process([]) do
+    IO.puts "no args bro"
+  end
+  def process(options) do
+    IO.puts "hello #{options[:name]}"
+  end
 
-  ## Examples
-
-      iex> Pack.hello
-      :world
-
-  """
-  def hello do
-    :world
+  defp parse(args) do
+    {options, _, _} = OptionParser.parse(args, switches: [foo: :string])
+    options
   end
 end
