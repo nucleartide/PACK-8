@@ -29,6 +29,8 @@ defmodule Pack.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    []
+    [{:file_system, "~> 0.1"},
+     # {:fs, "~> 3.0"}]
+     {:fs, "~> 2.0"}]
   end
 end

@@ -1,8 +1,20 @@
 defmodule Pack do
   def main(args) do
-    args
-    |> parse
-    |> process
+    :fs.start_link(:my_watcher, Path.absname("."))
+    :fs.subscribe(:my_watcher)
+    receive do
+        {_watcher_process, {:fs, :file_event}, {changedFile, _type}} ->
+             IO.puts("#{changedFile} was updated")
+        anything -> IO.puts "shit"
+    end
+    # flush()
+
+#    {:ok, pid} = FileSystem.start_link(dirs: ["/Users/jason/Repositories/pack"])
+#    FileSystem.subscribe(pid)
+#
+#    receive do
+#      something -> IO.puts(something)
+#    end
   end
 
   def process([]) do

@@ -1,9 +1,14 @@
+# Run the program.
+run: build
+	@./pack
+.PHONY: run
+
 # Build the project.
-build:
+build: clean
 	@mix escript.build
 .PHONY: build
 
 # Clean up build.
 clean:
-	@rm -rf _build/
+	@mix clean
 .PHONY: clean
