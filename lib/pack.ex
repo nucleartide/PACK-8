@@ -28,4 +28,18 @@ defmodule Pack do
     {options, _, _} = OptionParser.parse(args, switches: [foo: :string])
     options
   end
+
+  @doc """
+  Given a string of Lua code, parse out `require` calls and
+  return a list of required paths.
+
+  See https://regex101.com/r/kzY8rx/4 for an explanation of
+  the regex.
+
+  (Thanks to https://www.twitch.tv/jumpystick for the help.)
+  """
+  def parse_requires(lua) do
+    Regex.scan(~r/require\s*(\()?\s*(?<quote>['"])([^()'"]+)\k<quote>\s*(?(1)\))/, lua)
+    |> Enum.map(fn [_, _, _, match] -> match end)
+  end
 end
