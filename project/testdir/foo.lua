@@ -1,3 +1,3 @@
 
-local bar = require('./testdir/bar')
+local bar = require('./bar')
 print(bar)

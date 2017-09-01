@@ -34,12 +34,28 @@ defmodule Pack do
   return a list of required paths.
 
   See https://regex101.com/r/kzY8rx/4 for an explanation of
-  the regex.
-
-  (Thanks to https://www.twitch.tv/jumpystick for the help.)
+  the regex. (Thanks to https://www.twitch.tv/jumpystick.)
   """
   def parse_requires(lua) do
     Regex.scan(~r/require\s*(\()?\s*(?<quote>['"])([^()'"]+)\k<quote>\s*(?(1)\))/, lua)
     |> Enum.map(fn [_, _, _, match] -> match end)
+  end
+
+  @doc """
+  Normalize a path according to Lua's `require` resolution.
+
+  Note that Lua requires are more like Java module names,
+  and that dots are replaced with path separators:
+
+    './foo/bar'   -> './foo/bar.lua'
+    'foo/bar'     -> './foo/bar.lua'
+    'foo.bar'     -> './foo/bar.lua'
+    'foo/bar.lua' -> './foo/bar/lua.lua'
+  """
+  def require(module_path) do
+    module_path
+    |> String.replace(".", "/")
+    |> (fn p -> "./#{p}.lua" end).()
+    |> Path.expand
   end
 end
