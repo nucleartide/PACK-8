@@ -58,4 +58,22 @@ defmodule Pack do
     |> (fn p -> "./#{p}.lua" end).()
     |> Path.expand
   end
+
+  @doc """
+
+      iex> DFS.visit(1, %{1 => [2, 3], 2 => [1], 3 => [1]}).map
+			%{1 => true, 2 => true, 3 => true}
+
+	"""
+  def visit(start, nodes, visited \\ MapSet.new()) do
+    adj = nodes[start]
+    acc = visited |> MapSet.put(start)
+
+    Enum.reduce(adj, acc, fn (n, acc) ->
+      case MapSet.member?(acc, n) do
+        true  -> acc
+        false -> visit(n, nodes, acc)
+      end
+    end)
+  end
 end
