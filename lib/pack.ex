@@ -1,12 +1,29 @@
 defmodule Pack do
   def main(args) do
-    :fs.start_link(:my_watcher, Path.absname("."))
-    :fs.subscribe(:my_watcher)
-    receive do
-        {_watcher_process, {:fs, :file_event}, {changedFile, _type}} ->
-             IO.puts("#{changedFile} was updated")
-        anything -> IO.puts "shit"
+    file = args
+      |> Enum.at(0, "main.lua")
+
+    bundle = case String.ends_with?(file, ".lua") do
+      true  -> String.replace(file, ".lua", ".bundle.lua")
+      false -> throw("File #{file} does not .lua as its file extension.")
     end
+
+    file
+    |> Path.expand
+    |> visit
+    |> output(Path.expand(file), bundle)
+
+    #    visit(file)
+    #|> output
+    # |> IO.puts
+
+#    :fs.start_link(:my_watcher, Path.absname("."))
+#    :fs.subscribe(:my_watcher)
+#    receive do
+#        {_watcher_process, {:fs, :file_event}, {changedFile, _type}} ->
+#             IO.puts("#{changedFile} was updated")
+#        anything -> IO.puts "shit"
+#    end
     # flush()
 
 #    {:ok, pid} = FileSystem.start_link(dirs: ["/Users/jason/Repositories/pack"])
@@ -105,15 +122,18 @@ defmodule Pack do
 
 
   """
-  def output(modules, main \\ "main.lua") do
+  def output(modules, main, bundle) do
     list = MapSet.to_list(modules)
+    IO.inspect list
     module_list = list
       |> Enum.map(fn f ->
-        File.read!(f) |> replace_require
+        File.read!(f)
+        |> replace_require
+        |> (fn source -> {f, source} end).()
       end)
-      |> Enum.map(fn source ->
+      |> Enum.map(fn {file, source} ->
         """
-        function()
+        ["#{file}"] = function()
           #{source}
         end,
         """
@@ -130,7 +150,7 @@ defmodule Pack do
 #     hello world
 #     """))
 
-    """
+    final_output = """
     __modules__ = {
       #{module_list}
     }
@@ -138,14 +158,16 @@ defmodule Pack do
     __cache__ = {}
 
     function require(idx)
-      local cache = __luapack_cache__[idx]
+      local cache = __cache__[idx]
       if cache then return cache end
-      local module = __luapack_modules__[idx]()
-      __luapack_cache__[idx] = module
+      local module = __modules__[idx]()
+      __cache__[idx] = module
       return module
     end
 
     require '#{main}'
     """
+
+    File.write!(bundle, final_output)
   end
 end

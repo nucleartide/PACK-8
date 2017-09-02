@@ -1,6 +1,7 @@
 # Run the program.
 run: build
-	@./pack
+	@./pack main.lua
+	@lua main.bundle.lua
 .PHONY: run
 
 # Build the project.
