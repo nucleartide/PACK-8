@@ -81,4 +81,71 @@ defmodule Pack do
       end
     end)
   end
+
+  @doc """
+  https://regex101.com/r/kzY8rx/5
+  """
+  def replace_require(lua) do
+    Regex.replace(
+      ~r/require(\s*)(\()?(\s*)(?<quote>['"])([^()'"]+)\k<quote>(?(2)(\s*)\))/,
+      lua,
+      fn _, _, _, _, _, path, ws6 ->
+        path
+        |> String.replace(".", "/")
+        |> (fn p -> "./#{p}.lua" end).()
+        |> Path.expand
+        |> (fn p -> "require '#{p}'#{ws6}" end).()
+      end
+    )
+  end
+
+  @doc """
+      iex> Pack.output(MapSet.new(["/Users/jason/Repositories/pack/main.lua"]))
+      nil
+
+
+  """
+  def output(modules, main \\ "main.lua") do
+    list = MapSet.to_list(modules)
+    module_list = list
+      |> Enum.map(fn f ->
+        File.read!(f) |> replace_require
+      end)
+      |> Enum.map(fn source ->
+        """
+        function()
+          #{source}
+        end,
+        """
+      end)
+      |> Enum.join("\n")
+
+#     IO.puts("[test] " <> replace_require("""
+#     require './test'
+# 
+#     hello world
+# 
+#     require './test'
+# 
+#     hello world
+#     """))
+
+    """
+    __modules__ = {
+      #{module_list}
+    }
+
+    __cache__ = {}
+
+    function require(idx)
+      local cache = __luapack_cache__[idx]
+      if cache then return cache end
+      local module = __luapack_modules__[idx]()
+      __luapack_cache__[idx] = module
+      return module
+    end
+
+    require '#{main}'
+    """
+  end
 end
