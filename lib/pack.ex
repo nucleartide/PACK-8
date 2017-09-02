@@ -53,7 +53,7 @@ defmodule Pack do
     'foo.bar'     -> './foo/bar.lua'
     'foo/bar.lua' -> './foo/bar/lua.lua'
   """
-  def require(module_path) do
+  def lua_require(module_path) do
     module_path
     |> String.replace(".", "/")
     |> (fn p -> "./#{p}.lua" end).()
@@ -61,19 +61,23 @@ defmodule Pack do
   end
 
   @doc """
+  Perform a DFS traversal of a Lua file's dependency tree.
 
-      iex> Pack.visit(1, %{1 => [2, 3], 2 => [1], 3 => [1]}).map
-      %{1 => true, 2 => true, 3 => true}
+      iex> Pack.visit("/Users/jason/Repositories/pack/main.lua").map
+      %{"/Users/jason/Repositories/pack/main.lua" => true, "/Users/jason/Repositories/pack/test_module.lua" => true}
 
   """
-  def visit(start, nodes, visited \\ MapSet.new()) do
-    adj = nodes[start]
+  def visit(start, visited \\ MapSet.new()) do
+    adj = start
+      |> File.read!
+      |> parse_requires
     acc = visited |> MapSet.put(start)
 
     Enum.reduce(adj, acc, fn (n, acc) ->
-      case MapSet.member?(acc, n) do
+      n = lua_require(n)
+      new_acc = case MapSet.member?(acc, n) do
         true  -> acc
-        false -> visit(n, nodes, acc)
+        false -> visit(n, acc)
       end
     end)
   end

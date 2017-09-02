@@ -12,3 +12,8 @@ build: clean
 clean:
 	@mix clean
 .PHONY: clean
+
+# Run tests.
+test:
+	@mix test
+.PHONY: test
