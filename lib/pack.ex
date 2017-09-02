@@ -37,7 +37,8 @@ defmodule Pack do
   the regex. (Thanks to https://www.twitch.tv/jumpystick.)
   """
   def parse_requires(lua) do
-    Regex.scan(~r/require\s*(\()?\s*(?<quote>['"])([^()'"]+)\k<quote>\s*(?(1)\))/, lua)
+    ~r/require\s*(\()?\s*(?<quote>['"])([^()'"]+)\k<quote>\s*(?(1)\))/
+    |> Regex.scan(lua)
     |> Enum.map(fn [_, _, _, match] -> match end)
   end
 
@@ -61,7 +62,7 @@ defmodule Pack do
 
   @doc """
 
-      iex> DFS.visit(1, %{1 => [2, 3], 2 => [1], 3 => [1]}).map
+      iex> Pack.visit(1, %{1 => [2, 3], 2 => [1], 3 => [1]}).map
       %{1 => true, 2 => true, 3 => true}
 
   """
