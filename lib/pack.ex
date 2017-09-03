@@ -12,6 +12,7 @@ defmodule Pack do
     |> Path.expand
     |> visit
     |> output(Path.expand(file), bundle)
+    |> output_p8(String.replace(file, ".lua", ".p8"))
 
     #    visit(file)
     #|> output
@@ -169,5 +170,34 @@ defmodule Pack do
     """
 
     File.write!(bundle, final_output)
+		final_output
   end
+
+  # TODO: p8 file should exist, otherwise output code bundle
+	def output_p8(source, filename \\ "blah.p8") do
+		{:ok, pid} = StringIO.open("")
+    File.touch!(filename)
+
+		filename
+		|> File.stream!([:utf8])
+		|> Stream.transform(true, fn (line, acc) ->
+			case line do
+				"__lua__\n" ->
+					{[line], false}
+				"__gfx__\n" ->
+					{[source, line], true}
+				_ when acc ->
+					{[line], acc}
+				_ when not acc ->
+					{[], acc}
+			end
+		end)
+		|> Stream.map(fn line -> IO.write(pid, line) end)
+		|> Stream.run
+
+		content = pid
+			|> StringIO.flush
+
+		File.write!(filename, content)
+	end
 end
