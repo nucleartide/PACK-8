@@ -86,6 +86,16 @@ defmodule Pack do
 
   """
   def visit(start, visited \\ MapSet.new()) do
+    a = cond do
+      File.regular?(start) ->
+        "blah"
+      String.starts_with?(start, "github.com") ->
+        "blah"
+      true ->
+        "throw error"
+    end
+    IO.puts(a)
+
     adj = start
       |> File.read!
       |> parse_requires

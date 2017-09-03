@@ -3,7 +3,11 @@ version 8
 __lua__
 __modules__ = {
   ["/Users/jason/Repositories/pack/main.lua"] = function()
-  require '/Users/jason/Repositories/pack/test_module.lua'
+  local t = require '/Users/jason/Repositories/pack/test_module.lua'
+--local fsm = 'github.com/nucleartide/pico8/fsm'
+--local fsm = 'github.com/pico8/fsm'
+-- https://raw.githubusercontent.com/tj/make/master/golang.mk
+
 print("hi")
 
 end,
