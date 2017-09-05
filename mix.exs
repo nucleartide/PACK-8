@@ -1,14 +1,14 @@
-defmodule Pack.Mixfile do
+defmodule Pack8.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :pack,
+    [app: :pack8,
      version: "0.1.0",
      elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
-     escript: [main_module: Pack]]
+     escript: [main_module: Pack8]]
   end
 
   # Configuration for the OTP application
@@ -29,8 +29,9 @@ defmodule Pack.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:file_system, "~> 0.1"},
-     # {:fs, "~> 3.0"}]
-     {:fs, "~> 2.0"}]
+    [{:fs, "2.12.0"},
+     {:exfmt, "0.4.0"},
+     {:credo, "~> 0.8", only: [:dev, :test], runtime: false}
+    ]
   end
 end

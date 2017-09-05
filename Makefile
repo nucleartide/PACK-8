@@ -18,3 +18,8 @@ clean:
 test:
 	@mix test
 .PHONY: test
+
+# Lint.
+lint:
+	@mix credo list --strict
+.PHONY: lint
