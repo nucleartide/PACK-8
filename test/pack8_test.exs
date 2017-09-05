@@ -1,33 +1,11 @@
-defmodule PackTest do
+defmodule Pack8Test do
   use ExUnit.Case
-  doctest Pack
-
-  test "the truth" do
-    assert 1 + 1 == 2
-  end
+  # doctest Pack8
 
   test "parse_requires" do
-    match = Pack.parse_requires(~s"""
+    match = Pack8.parse_requires("""
       require(       
-
-
-
-
-
-
-
-
        './stuff'
-
-
-
-
-
-
-
-
-
-
       )require("hello")require('stuff")require("aaaa'")require'hello again'require       'hiiiii' 
     """)
 

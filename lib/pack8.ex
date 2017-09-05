@@ -1,4 +1,4 @@
-defmodule Pack do
+defmodule Pack8 do
   def main(args) do
     file = args
       |> Enum.at(0, "main.lua")
@@ -81,7 +81,7 @@ defmodule Pack do
   @doc """
   Perform a DFS traversal of a Lua file's dependency tree.
 
-      iex> Pack.visit("/Users/jason/Repositories/pack/main.lua").map
+      iex> Pack8.visit("/Users/jason/Repositories/pack/main.lua").map
       %{"/Users/jason/Repositories/pack/main.lua" => true, "/Users/jason/Repositories/pack/test_module.lua" => true}
 
   """
@@ -128,7 +128,7 @@ defmodule Pack do
   end
 
   @doc """
-      iex> Pack.output(MapSet.new(["/Users/jason/Repositories/pack/main.lua"]))
+      iex> Pack8.output(MapSet.new(["/Users/jason/Repositories/pack/main.lua"]))
       nil
 
 
