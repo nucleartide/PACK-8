@@ -19,7 +19,7 @@ test:
 	@mix test
 .PHONY: test
 
-# Lint.
+# Run linter.
 lint:
 	@mix credo list --strict
 .PHONY: lint
