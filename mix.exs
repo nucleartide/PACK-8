@@ -10,7 +10,9 @@ defmodule Pack8.Mixfile do
      deps: deps(),
      escript: [main_module: Cmd.Pack8],
      test_paths: ["."],
-     elixirc_paths: ["."]]
+     elixirc_paths: File.ls!()
+       |> Enum.filter(&File.dir?(&1))
+       |> Enum.filter(&not Enum.member?([".git", "_build", "deps"], &1))]
   end
 
   # Configuration for the OTP application
