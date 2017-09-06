@@ -8,7 +8,9 @@ defmodule Pack8.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
-     escript: [main_module: Pack8]]
+     escript: [main_module: Cmd.Pack8],
+     test_paths: ["."],
+     elixirc_paths: ["."]]
   end
 
   # Configuration for the OTP application
@@ -33,3 +35,5 @@ defmodule Pack8.Mixfile do
      {:credo, "~> 0.8", only: [:dev, :test], runtime: false}]
   end
 end
+
+IO.inspect(Mix.Project.load_paths)
