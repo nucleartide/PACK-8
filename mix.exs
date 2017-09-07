@@ -9,7 +9,7 @@ defmodule Pack8.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       deps: deps(),
-      escript: [main_module: Cmd.Pack8],
+      escript: [main_module: Main],
       test_paths: ["."],
       elixirc_paths: File.ls!()
        |> Enum.filter(fn path -> File.dir?(path) end)

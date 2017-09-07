@@ -27,6 +27,6 @@ lint:
 
 # Run type check.
 flow:
-	# @mix dialyzer >/dev/null # can't filter stderr :(
+	@# @mix dialyzer >/dev/null # can't filter stderr :(
 	@mix dialyzer
 .PHONY: flow

@@ -1,7 +1,8 @@
 
-defmodule Cmd.Pack8 do
+defmodule Main do
+  # TODO: improve help output
   def main([]),
-    do: perform("main.lua")
+    do: IO.puts(:stderr, "Must specify a filename.")
   def main([path]),
     do: perform(path)
   def main([path | _args]),
@@ -12,11 +13,6 @@ defmodule Cmd.Pack8 do
   end
 
 #  def main(args) do
-#     bundle = case String.ends_with?(file, ".lua") do
-#       true  -> String.replace(file, ".lua", ".bundle.lua")
-#       false -> throw("File #{file} does not .lua as its file extension.")
-#     end
-# 
 #     file
 #     |> Path.expand
 #     |> visit

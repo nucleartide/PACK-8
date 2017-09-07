@@ -1,3 +1,17 @@
+# walk lua file's dependency tree
+# ensure all files are available locally
+
+# packages:
+# installer, however two resolvers are needed
+# bundler
+
+defmodule Installer do
+  @doc "parse installs parsed dependencies from a Lua file."
+  @spec parse(String.t) :: nil
+  def parse(lua) do
+  end
+end
+
 defmodule DFS do
 #   @doc """
 #   Perform a DFS traversal of a Lua file's dependency tree.
