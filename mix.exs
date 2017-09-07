@@ -42,5 +42,3 @@ defmodule Pack8.Mixfile do
     ]
   end
 end
-
-IO.inspect(Mix.Project.load_paths)
