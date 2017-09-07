@@ -20,5 +20,5 @@ erl_crash.dump
 *.ez
 
 # output binary
-pack
-pack8
+/pack
+/pack8
