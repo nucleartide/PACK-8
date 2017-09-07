@@ -39,6 +39,7 @@ defmodule Pack8.Mixfile do
       # doesn't work with "../pack8"
       {:fs, "2.12.0"}, # doesn't work with new compile paths :(
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
     ]
   end
 end

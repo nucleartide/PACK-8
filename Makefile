@@ -1,6 +1,8 @@
 # Run the program.
-run: build
+run: flow build
+	@./pack8
 	@./pack8 project/main.lua
+	@./pack8 project/main.lua blah
 .PHONY: run
 
 # Build the project.
@@ -22,3 +24,9 @@ test:
 lint:
 	@mix credo list --strict
 .PHONY: lint
+
+# Run type check.
+flow:
+	# @mix dialyzer >/dev/null # can't filter stderr :(
+	@mix dialyzer
+.PHONY: flow
