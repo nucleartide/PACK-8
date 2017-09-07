@@ -1,6 +1,6 @@
 # Run the program.
 run: build
-	@(cd project/ && ../pack8 main.lua)
+	@./pack8 project/main.lua
 .PHONY: run
 
 # Build the project.

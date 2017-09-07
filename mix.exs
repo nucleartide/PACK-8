@@ -35,8 +35,11 @@ defmodule Pack8.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    # {:fs, "~> 2.12.0"}, # doesn't work with new compile paths :(
-    [{:credo, "~> 0.8", only: [:dev, :test], runtime: false}]
+    [
+      # doesn't work with "../pack8"
+      {:fs, "2.12.0"}, # doesn't work with new compile paths :(
+      {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
+    ]
   end
 end
 
