@@ -2,17 +2,19 @@ defmodule Pack8.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :pack8,
-     version: "0.1.0",
-     elixir: "~> 1.5",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     deps: deps(),
-     escript: [main_module: Cmd.Pack8],
-     test_paths: ["."],
-     elixirc_paths: File.ls!()
-       |> Enum.filter(&File.dir?(&1))
-       |> Enum.filter(&not Enum.member?([".git", "_build", "deps"], &1))]
+    [
+      app: :pack8,
+      version: "0.1.0",
+      elixir: "~> 1.5",
+      build_embedded: Mix.env == :prod,
+      start_permanent: Mix.env == :prod,
+      deps: deps(),
+      escript: [main_module: Cmd.Pack8],
+      test_paths: ["."],
+      elixirc_paths: File.ls!()
+       |> Enum.filter(fn path -> File.dir?(path) end)
+       |> Enum.filter(fn path -> not Enum.member?([".git", "_build", "deps"], path) end)
+    ]
   end
 
   # Configuration for the OTP application
@@ -33,8 +35,8 @@ defmodule Pack8.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:fs, "2.12.0"},
-     {:credo, "~> 0.8", only: [:dev, :test], runtime: false}]
+    # {:fs, "~> 2.12.0"}, # doesn't work with new compile paths :(
+    [{:credo, "~> 0.8", only: [:dev, :test], runtime: false}]
   end
 end
 
