@@ -4,12 +4,14 @@ defmodule Resolver.FileSystem do
 
   @doc ~S"""
 
-      iex> Resolver.FileSystem.get("test_helper.exs")
-      {:ok, "ExUnit.start()\n"}
+      iex> Resolver.FileSystem.get("project/test")
+      {:ok, "-- hello world\n"}
 
   """
   @spec get(path :: String.t) :: {:error, any()} | {:ok, atom()}
   def get(path) do
-    File.read(path)
+    path
+    |> Installer.normalize()
+    |> File.read()
   end
 end

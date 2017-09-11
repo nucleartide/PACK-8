@@ -34,6 +34,8 @@ defmodule Installer do
   TODO: Make regex not transform `require` calls within
   comments. Doable with Elixir multiline modifier.
 
+  TODO: dynamic requires, won't support
+
       iex> Installer.parse("require('foo') require('bar')")
       ["foo", "bar"]
 
@@ -72,12 +74,37 @@ defmodule Installer do
 
   @doc """
   Install parsed dependencies from a string of Lua code.
-  """
-  @spec install(String.t) :: {:ok} | {:error}
-  def install(lua) do
-    parse(lua)
 
-    {:ok}
+  Note: this function has side effects.
+
+      iex> Installer.install("require('github.com/nucleartide/PACK-8/project/main2') require('project/testdir/bar')")
+      4
+  """
+  def install(lua) do
+    # list of remote dependencies
+    deps = parse(lua)
+     |> Enum.filter(fn
+       "github.com" <> _ = path -> true
+       _ -> false
+     end)
+
+    # list of dependencies, converted to list of file paths
+    normalized = deps
+      |> Enum.map(&Installer.normalize/1)
+
+    # list of file contents
+    file_contents = deps
+      |> Enum.map(&Resolver.get/1)
+      |> Enum.map(&handle_error/1)
+
+    IO.inspect(normalized)
+  end
+
+  defp handle_error({:ok, result}) do
+    result
+  end
+  defp handle_error({:error, reason}) do
+    raise("fail")
   end
 end
 
