@@ -40,6 +40,8 @@ defmodule Pack8.Mixfile do
       {:fs, "2.12.0"}, # doesn't work with new compile paths :(
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
+      {:tesla, "~> 0.7.2"},
+      {:httpoison, "~> 0.13"},
     ]
   end
 end

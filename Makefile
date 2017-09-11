@@ -1,5 +1,5 @@
 # Run the program.
-run: flow build
+run: build
 	@./pack8
 	@./pack8 project/main.lua
 	@./pack8 project/main.lua blah
