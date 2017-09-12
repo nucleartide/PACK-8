@@ -97,7 +97,15 @@ defmodule Installer do
       |> Enum.map(&Resolver.get/1)
       |> Enum.map(&handle_error/1)
 
-    IO.inspect(normalized)
+    for {path, contents} <- Enum.zip(normalized, file_contents) do
+      # make directories
+      path
+      |> Path.dirname()
+      |> File.mkdir_p!()
+
+      # write to file
+      File.write(path, contents)
+    end
   end
 
   defp handle_error({:ok, result}) do
