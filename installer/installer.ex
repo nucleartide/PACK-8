@@ -1,9 +1,3 @@
-# walk lua file's dependency tree
-# ensure all files are available locally
-
-# packages:
-# installer, however two resolvers are needed
-# bundler
 
 defmodule Installer do
   import Sigil, only: [sigil_m: 2]
@@ -66,6 +60,7 @@ defmodule Installer do
       "./foo/bar/lua.lua"
 
   """
+  @spec normalize(path :: String.t) :: String.t
   def normalize(path) do
     path
     |> String.replace(".", "/")
@@ -73,14 +68,30 @@ defmodule Installer do
   end
 
   @doc """
-  Install parsed dependencies from a string of Lua code.
+  Install parsed dependencies from a string of Lua code,
+  only if a dependency doesn't exist.
 
   Note: this function has side effects.
 
       iex> Installer.install("require('github.com/nucleartide/PACK-8/project/main2') require('project/testdir/bar')")
       4
   """
+  @spec install(lua :: String.t) :: :ok | {:error, any()}
   def install(lua) do
+    lua
+    |> parse # grab list of dependencies
+
+    # grab the contents of each dependency in parallel
+    # if some dependencies can't be fetched, the error of the first failed dep
+    # will be returned
+
+    # ===
+    # ===
+    # ===
+
+    # convert list of dependencies to list of file paths
+    # file_paths = deps |> Enum.map(&Installer.normalize/1)
+
     # list of remote dependencies
     deps = parse(lua)
      |> Enum.filter(fn
@@ -105,6 +116,9 @@ defmodule Installer do
 
       # write to file
       File.write(path, contents)
+
+      # install this file's dependencies too
+      install(contents)
     end
   end
 
@@ -116,16 +130,7 @@ defmodule Installer do
   end
 end
 
-defmodule DFS do
-#   @doc """
-#   Perform a DFS traversal of a Lua file's dependency tree.
-# 
-#   TODO: make resolver / installer like in TJ's mmake?
-# 
-#       iex> Pack8.visit("/Users/jason/Repositories/pack/main.lua").map
-#       %{"/Users/jason/Repositories/pack/main.lua" => true, "/Users/jason/Repositories/pack/test_module.lua" => true}
-# 
-#   """
+# defmodule DFS do
 #   def visit(start, visited \\ MapSet.new()) do
 #     a = cond do
 #       File.regular?(start) ->
@@ -150,4 +155,4 @@ defmodule DFS do
 #       end
 #     end)
 #   end
-end
+# end
