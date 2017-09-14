@@ -67,6 +67,12 @@ defmodule Installer do
     |> (fn p -> "./#{p}.lua" end).()
   end
 
+  @spec fetch(deps :: [String.t]) :: any()
+  defp fetch(deps) do
+    deps
+    |> Enum.map(&Resolver.get/1)
+  end
+
   @doc """
   Install parsed dependencies from a string of Lua code,
   only if a dependency doesn't exist.
@@ -84,6 +90,8 @@ defmodule Installer do
     # grab the contents of each dependency in parallel
     # if some dependencies can't be fetched, the error of the first failed dep
     # will be returned
+
+    # TODO: add this code in
 
     # ===
     # ===
