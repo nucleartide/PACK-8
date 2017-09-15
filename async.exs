@@ -21,13 +21,6 @@ tasks =
     end)
   end
 
-tasks_with_results = Task.yield_many(tasks)
-
-results = Enum.map(tasks_with_results, fn {task, res} ->
-  # shutdown the tasks that did not reply nor exit
-  res || Task.shutdown(task, :brutal_kill)
-end)
-
 Enum.reduce(results, nil, fn (result, _acc) ->
   # TODO: on error, return an error tuple
   # when the accumulator is an error tuple, return the acc
@@ -39,13 +32,11 @@ Enum.reduce(results, nil, fn (result, _acc) ->
       IO.puts "request failed: status code #{status_code}"
     {:ok, {:error, %HTTPoison.Error{reason: reason}}} ->
       IO.puts "request failed: reason #{reason}"
+    {:ok, {:error, posix_error}}
+      IO.puts "request failed, couldn't open file for some reason"
     {:exit, reason} -> # task died
       IO.puts "request failed: task died"
     nil ->
       IO.puts "timed out"
   end
 end)
-
-for {:ok, value} <- results do
-  # IO.inspect(value)
-end

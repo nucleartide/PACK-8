@@ -67,10 +67,49 @@ defmodule Installer do
     |> (fn p -> "./#{p}.lua" end).()
   end
 
+  @doc """
+  Given a list of dependencies, return a list of the
+  dependencies' content.
+
+  If fetching any dependency's content fails, this function
+  will return the error of the first failing fetch.
+  """
   @spec fetch(deps :: [String.t]) :: any()
   defp fetch(deps) do
-    deps
-    |> Enum.map(&Resolver.get/1)
+    results = deps
+      |> Enum.map(fn dep ->
+        Task.async(fn -> Resolver.get(dep) end)
+      end)
+      |> Task.yield_many()
+      |> Enum.map(fn {task, res} ->
+        # shut down the tasks that didn't reply nor exit
+        res || Task.shutdown(task, :brutal_kill)
+      end)
+
+    err = Enum.find(results, fn
+      {:ok, {:ok, %HTTPoison.Response{status_code: status_code}}} ->
+        # IO.puts "request failed: status code #{status_code}"
+        true
+      {:ok, {:error, %HTTPoison.Error{reason: reason}}} ->
+        # IO.puts "request failed: reason #{reason}"
+        true
+      {:ok, {:error, posix_error}}
+        # IO.puts "request failed, couldn't open file for some reason"
+        true
+      {:exit, reason} -> # task died
+        # IO.puts "request failed: task died"
+        true
+      nil ->
+        # IO.puts "timed out"
+        # TODO: map this to an error tuple, so the truthy check below works
+        true
+    end)
+
+    if err do
+      # pattern match and return error
+    else
+      # return results
+    end
   end
 
   @doc """
