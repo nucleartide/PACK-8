@@ -8,10 +8,14 @@ defmodule Resolver.FileSystem do
       {:ok, "-- hello world\n"}
 
   """
-  @spec get(path :: String.t) :: {:error, any()} | {:ok, atom()}
+  @spec get(path :: String.t) :: {:ok, String.t} | {:error, File.Error}
   def get(path) do
     path
     |> Installer.normalize()
-    |> File.read()
+    |> File.read!()
+  rescue
+    f in File.Error -> {:error, f}
+  else
+    result -> {:ok, result}
   end
 end
