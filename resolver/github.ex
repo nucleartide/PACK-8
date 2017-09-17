@@ -12,7 +12,7 @@ defmodule Resolver.GitHub.InvalidPathError do
 end
 
 defmodule Resolver.GitHub.Error do
-  @type t :: Resolver.GitHub.InvalidPathError | HTTPoison.Error
+  @type t :: InvalidPathError | HTTPoison.Error
 end
 
 defmodule Resolver.GitHub do
@@ -30,6 +30,15 @@ defmodule Resolver.GitHub do
       ...> end
       iex> Resolver.GitHub.get("github.com/nucleartide/PACK-8/file", get!)
       {:ok, "test file"}
+
+      iex> Resolver.GitHub.get("this isn't github wtf")
+      {:error, %Resolver.GitHub.InvalidPathError{message: "path \"this isn't github wtf\" is invalid, format is github.com/<user>/<repo>/<file>"}}
+
+      iex> get! = fn _ ->
+      ...>   %HTTPoison.Response{status_code: 404}
+      ...> end
+      iex> Resolver.GitHub.get("github.com/nucleartide/PACK-8/file", get!)
+      {:error, %HTTPoison.Error{reason: "received 404 for https://raw.githubusercontent.com/nucleartide/PACK-8/master/file.lua"}}
 
   """
   @spec get(String.t, fetch) :: {:ok, String.t} | {:error, Error.t}
