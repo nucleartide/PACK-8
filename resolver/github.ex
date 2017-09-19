@@ -25,19 +25,19 @@ defmodule Resolver.GitHub do
 
   `path` should conform to github.com/<user>/<repo>/<file> format.
 
-      iex> get! = fn _ ->
-      ...>   %HTTPoison.Response{status_code: 200, body: "test file"}
+      iex> get = fn _ ->
+      ...>   {:ok, %HTTPoison.Response{status_code: 200, body: "test file"}}
       ...> end
-      iex> Resolver.GitHub.get("github.com/nucleartide/PACK-8/file", get!)
+      iex> Resolver.GitHub.get("github.com/nucleartide/PACK-8/file", get)
       {:ok, "test file"}
 
       iex> Resolver.GitHub.get("this isn't github wtf")
       {:error, %Resolver.GitHub.PathError{message: "path \"this isn't github wtf\" is invalid, format is github.com/<user>/<repo>/<file>"}}
 
-      iex> get! = fn _ ->
-      ...>   %HTTPoison.Response{status_code: 404}
+      iex> get = fn _ ->
+      ...>   {:ok, %HTTPoison.Response{status_code: 404}}
       ...> end
-      iex> Resolver.GitHub.get("github.com/nucleartide/PACK-8/file", get!)
+      iex> Resolver.GitHub.get("github.com/nucleartide/PACK-8/file", get)
       {:error, %HTTPoison.Error{reason: "received 404 for https://raw.githubusercontent.com/nucleartide/PACK-8/master/file.lua"}}
 
   """
@@ -84,9 +84,9 @@ defmodule Resolver.GitHub do
     HTTPoison.start()
 
     case fetcher.(url) do
-      %HTTPoison.Response{status_code: 200, body: body} ->
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         {:ok, body}
-      %HTTPoison.Response{status_code: status_code} ->
+      {:ok, %HTTPoison.Response{status_code: status_code}} ->
         reason = "received #{status_code} for #{url}"
         {:error, %HTTPoison.Error{reason: reason}}
       err ->

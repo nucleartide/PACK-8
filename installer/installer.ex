@@ -2,9 +2,6 @@
 defmodule Installer do
   import Sigil, only: [sigil_m: 2]
 
-  @doc """
-  blah blah
-  """
   @require ~m/
     require
     \s*
@@ -74,32 +71,42 @@ defmodule Installer do
   If fetching any dependency's content fails, this function
   will return the error of the first failing fetch.
 
-      iex> Installer.fetch!(["github.com/nucleartide/PACK-8/project/main", "project/test"])
+      iex> Installer.fetch(["github.com/nucleartide/PACK-8/project/main", "project/test"])
+      4
+
+      iex> Installer.fetch(["github.com/doesnt/work", "project/test"])
       4
 
   """
-  @spec fetch!(deps :: [String.t]) :: [String.t]
-  def fetch!(deps) do
-    deps
-    |> Enum.map(fn dep ->
-      Task.async(fn -> Resolver.get(dep) end)
+  @spec fetch(deps :: [String.t]) :: {:ok, [String.t]} | {:error, Exception.t}
+  def fetch(deps) do
+    results = deps
+      |> Enum.map(fn dep ->
+        Task.async(fn -> Resolver.get(dep) end)
+      end)
+      |> Task.yield_many()
+      |> Enum.map(fn {task, res} ->
+        # shut down the tasks that didn't reply nor exit
+        res || Task.shutdown(task, :brutal_kill)
+      end)
+      |> Enum.zip(deps)
+      |> Enum.map(fn
+        {{:ok, {:ok, result}}, _dep} ->
+          result
+        {{:ok, {:error, _reason} = err}, _dep} ->
+          err
+        {{:exit, _reason}, dep} -> # task died
+          {:error, RuntimeError.exception("failed to fetch #{dep}")}
+        {nil, dep} -> # task timed out
+          {:error, RuntimeError.exception("failed to fetch dependency #{dep}")}
+      end)
+
+    err = Enum.find(results, fn
+      {:error, _} -> true
+      _           -> false
     end)
-    |> Task.yield_many()
-    |> Enum.map(fn {task, res} ->
-      # shut down the tasks that didn't reply nor exit
-      res || Task.shutdown(task, :brutal_kill)
-    end)
-    |> Enum.zip(deps)
-    |> Enum.map(fn
-      {{:ok, {:ok, result}}, _dep} ->
-        result
-      {{:ok, {:error, exception}}, _dep} ->
-        raise exception
-      {{:exit, reason}, dep} -> # task died
-        raise "failed to fetch dependency #{dep}"
-      {nil, dep} -> # task timed out
-        raise "failed to fetch dependency #{dep}"
-    end)
+
+    if err, do: err, else: {:ok, results}
   end
 
   @doc """
