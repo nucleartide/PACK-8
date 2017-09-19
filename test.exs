@@ -1,6 +1,13 @@
-a = {{3, 4}, 5}
 
+defmodule Test do
+  def is_remote?(4),
+    do: true
+  def is_remote?(_),
+    do: false
+end
+
+a = 4
 case a do
-  {{q, w} = t, e} = r ->
-    IO.inspect(t)
+  a when Test.is_remote?(a) ->
+    "success"
 end

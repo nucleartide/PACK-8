@@ -91,8 +91,8 @@ defmodule Installer do
       end)
       |> Enum.zip(deps)
       |> Enum.map(fn
-        {{:ok, {:ok, result}}, _dep} ->
-          result
+        {{:ok, {:ok, result}}, dep} ->
+          {dep, result}
         {{:ok, {:error, _reason} = err}, _dep} ->
           err
         {{:exit, _reason}, dep} -> # task died
@@ -113,56 +113,36 @@ defmodule Installer do
   Install parsed dependencies from a string of Lua code,
   only if a dependency doesn't exist.
 
-  Note: this function has side effects.
-
       iex Installer.install("require('github.com/nucleartide/PACK-8/project/main2') require('project/testdir/bar')")
       4
   """
-  @spec install(lua :: String.t) :: :ok | {:error, any()}
+  @spec install(lua :: String.t) :: :ok | {:error, Exception.t}
   def install(lua) do
-    lua
-    |> parse # grab list of dependencies
-    # grab the contents of each dependency in parallel
-    # if some dependencies can't be fetched, the error of the first failed dep
-    # will be returned
+    with {:ok, files} <- lua |> parse() |> fetch(),
 
-    # TODO: add this code in
+         # write _only_ remote dependencies to disk
+         files
+         |> Enum.filter(fn {path, _} -> Resolver.is_remote?(path) end)
+         |> Enum.each(fn {path, contents} ->
+           # make directories
+           path
+           |> Installer.normalize()
+           |> Path.dirname()
+           |> File.mkdir_p!()
 
-    # ===
-    # ===
-    # ===
+           # write to file
+           File.write!(path, contents)
+         end),
 
-    # convert list of dependencies to list of file paths
-    # file_paths = deps |> Enum.map(&Installer.normalize/1)
+         # for each file, install its dependencies too
+         Enum.each(files, fn {path, contents} ->
+           install(contents)
+         end)
 
-#    # list of remote dependencies
-#    deps = parse(lua)
-#     |> Enum.filter(fn
-#       "github.com" <> _ = path -> true
-#       _ -> false
-#     end)
-#
-#    # list of dependencies, converted to list of file paths
-#    normalized = deps
-#      |> Enum.map(&Installer.normalize/1)
-#
-#    # list of file contents
-#    file_contents = deps
-#      |> Enum.map(&Resolver.get/1)
-#      |> Enum.map(&handle_error/1)
-#
-#    for {path, contents} <- Enum.zip(normalized, file_contents) do
-#      # make directories
-#      path
-#      |> Path.dirname()
-#      |> File.mkdir_p!()
-#
-#      # write to file
-#      File.write(path, contents)
-#
-#      # install this file's dependencies too
-#      install(contents)
-#    end
+         do: :ok
+
+    # TODO: error handling, make this an auxiliary function
+    # TODO: handle visited files
   end
 end
 

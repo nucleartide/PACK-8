@@ -6,4 +6,10 @@ defmodule Resolver do
     do: Resolver.GitHub.get(path)
   def get(path),
     do: Resolver.FileSystem.get(path)
+
+  @doc "Test if a path is a remote dependency."
+  def is_remote?("github.com/" <> _),
+    do: true
+  def is_remote?(_),
+    do: false
 end
