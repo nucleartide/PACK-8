@@ -1,6 +1,6 @@
 
 defmodule Resolver.FileSystem do
-  # @behaviour Resolver
+  @behaviour Resolver
 
   @doc ~S"""
 
