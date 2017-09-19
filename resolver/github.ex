@@ -1,5 +1,5 @@
 
-defmodule Resolver.GitHub.InvalidPathError do
+defmodule Resolver.GitHub.PathError do
   defexception [:message]
 
   defp msg(path) do
@@ -7,12 +7,12 @@ defmodule Resolver.GitHub.InvalidPathError do
   end
 
   def exception(path) do
-    %Resolver.GitHub.InvalidPathError{message: msg(path)}
+    %Resolver.GitHub.PathError{message: msg(path)}
   end
 end
 
 defmodule Resolver.GitHub.Error do
-  @type t :: InvalidPathError | HTTPoison.Error
+  @type t :: PathError | HTTPoison.Error
 end
 
 defmodule Resolver.GitHub do
@@ -32,7 +32,7 @@ defmodule Resolver.GitHub do
       {:ok, "test file"}
 
       iex> Resolver.GitHub.get("this isn't github wtf")
-      {:error, %Resolver.GitHub.InvalidPathError{message: "path \"this isn't github wtf\" is invalid, format is github.com/<user>/<repo>/<file>"}}
+      {:error, %Resolver.GitHub.PathError{message: "path \"this isn't github wtf\" is invalid, format is github.com/<user>/<repo>/<file>"}}
 
       iex> get! = fn _ ->
       ...>   %HTTPoison.Response{status_code: 404}
@@ -42,64 +42,55 @@ defmodule Resolver.GitHub do
 
   """
   @spec get(String.t, fetch) :: {:ok, String.t} | {:error, Error.t}
-  def get(path, fetch! \\ &HTTPoison.get!/1) do
-    path
-    |> validate!()
-    |> url()
-    |> req!(fetch!)
-  rescue
-    e in [Resolver.GitHub.InvalidPathError, HTTPoison.Error] -> {:error, e}
-  else
-    result -> {:ok, result}
+  def get(path, fetch \\ &HTTPoison.get/1) do
+    with {:ok, github_url} <- validate(path),
+         {:ok, content}    <- github_url |> url() |> req(fetch),
+         do: {:ok, content}
   end
 
-  @doc """
-  validate! that `path` conforms to the github.com/<user>/<repo>/<file>
-  format.
-
-  If validation succeeds, this function returns a tuple
-  containing the user, repo, and file.
-
-  Otherwise, this function raises a Resolver.GitHub.InvalidPathError.
-  """
-  @spec validate!(path :: String.t) :: github_url
-  defp validate!(path) do
+  # Validate that `path` conforms to the github.com/<user>/<repo>/<file>
+  # format.
+  # 
+  # If validation succeeds, this function returns a tuple containing the
+  # user, repo, and file.
+  # 
+  # Else, this function returns a Resolver.GitHub.PathError.
+  @spec validate(path :: String.t) :: {:ok, github_url} | {:error, Exception.t}
+  defp validate(path) do
     parts = path
       |> Installer.normalize()
       |> String.split("/")
 
     case parts do
-      [".", "github", "com", user, repo | file_parts]
-      when length(file_parts) > 0 ->
-        {user, repo, Enum.join(file_parts, "/")}
+      [".", "github", "com", user, repo | file] when length(file) > 0 ->
+        {:ok, {user, repo, Enum.join(file, "/")}}
       _ ->
-        raise Resolver.GitHub.InvalidPathError, path
+        {:error, Resolver.GitHub.PathError.exception(path)}
     end
   end
 
-  @doc """
-  url returns the URL for a GitHub file.
-  """
+  # url returns the URL for a GitHub file.
   @spec url(github_url) :: String.t
   defp url({user, repo, file}) do
     "https://raw.githubusercontent.com/#{user}/#{repo}/master/#{file}"
   end
 
-  @doc """
-  req! makes an HTTP request to a specified `url`.
-
-  It will raise an HTTPoison.Error for responses without a
-  status code of 200.
-  """
-  @spec req!(url :: String.t, fetch! :: fetch) :: String.t
-  defp req!(url, fetch!) do
+  # req makes an HTTP request to a specified `url`.
+  #
+  # It will return an HTTPoison.Error for responses without a status
+  # code of 200.
+  @spec req(String.t, fetch) :: {:ok, String.t} | {:error, Exception.t}
+  defp req(url, fetcher) do
     HTTPoison.start()
 
-    case fetch!.(url) do
+    case fetcher.(url) do
       %HTTPoison.Response{status_code: 200, body: body} ->
-        body
+        {:ok, body}
       %HTTPoison.Response{status_code: status_code} ->
-        raise HTTPoison.Error, reason: "received #{status_code} for #{url}"
+        reason = "received #{status_code} for #{url}"
+        {:error, %HTTPoison.Error{reason: reason}}
+      err ->
+        err
     end
   end
 end

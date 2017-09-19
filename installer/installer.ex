@@ -73,43 +73,33 @@ defmodule Installer do
 
   If fetching any dependency's content fails, this function
   will return the error of the first failing fetch.
+
+      iex> Installer.fetch!(["github.com/nucleartide/PACK-8/project/main", "project/test"])
+      4
+
   """
-  @spec fetch(deps :: [String.t]) :: any()
-  defp fetch(deps) do
-    results = deps
-      |> Enum.map(fn dep ->
-        Task.async(fn -> Resolver.get(dep) end)
-      end)
-      |> Task.yield_many()
-      |> Enum.map(fn {task, res} ->
-        # shut down the tasks that didn't reply nor exit
-        res || Task.shutdown(task, :brutal_kill)
-      end)
-
-    err = Enum.find(results, fn
-      {:ok, {:ok, %HTTPoison.Response{status_code: status_code}}} ->
-        # IO.puts "request failed: status code #{status_code}"
-        true
-      {:ok, {:error, %HTTPoison.Error{reason: reason}}} ->
-        # IO.puts "request failed: reason #{reason}"
-        true
-      {:ok, {:error, posix_error}}
-        # IO.puts "request failed, couldn't open file for some reason"
-        true
-      {:exit, reason} -> # task died
-        # IO.puts "request failed: task died"
-        true
-      nil ->
-        # IO.puts "timed out"
-        # TODO: map this to an error tuple, so the truthy check below works
-        true
+  @spec fetch!(deps :: [String.t]) :: [String.t]
+  def fetch!(deps) do
+    deps
+    |> Enum.map(fn dep ->
+      Task.async(fn -> Resolver.get(dep) end)
     end)
-
-    if err do
-      # pattern match and return error
-    else
-      # return results
-    end
+    |> Task.yield_many()
+    |> Enum.map(fn {task, res} ->
+      # shut down the tasks that didn't reply nor exit
+      res || Task.shutdown(task, :brutal_kill)
+    end)
+    |> Enum.zip(deps)
+    |> Enum.map(fn
+      {{:ok, {:ok, result}}, _dep} ->
+        result
+      {{:ok, {:error, exception}}, _dep} ->
+        raise exception
+      {{:exit, reason}, dep} -> # task died
+        raise "failed to fetch dependency #{dep}"
+      {nil, dep} -> # task timed out
+        raise "failed to fetch dependency #{dep}"
+    end)
   end
 
   @doc """
@@ -118,14 +108,13 @@ defmodule Installer do
 
   Note: this function has side effects.
 
-      iex> Installer.install("require('github.com/nucleartide/PACK-8/project/main2') require('project/testdir/bar')")
+      iex Installer.install("require('github.com/nucleartide/PACK-8/project/main2') require('project/testdir/bar')")
       4
   """
   @spec install(lua :: String.t) :: :ok | {:error, any()}
   def install(lua) do
     lua
     |> parse # grab list of dependencies
-
     # grab the contents of each dependency in parallel
     # if some dependencies can't be fetched, the error of the first failed dep
     # will be returned
@@ -139,41 +128,34 @@ defmodule Installer do
     # convert list of dependencies to list of file paths
     # file_paths = deps |> Enum.map(&Installer.normalize/1)
 
-    # list of remote dependencies
-    deps = parse(lua)
-     |> Enum.filter(fn
-       "github.com" <> _ = path -> true
-       _ -> false
-     end)
-
-    # list of dependencies, converted to list of file paths
-    normalized = deps
-      |> Enum.map(&Installer.normalize/1)
-
-    # list of file contents
-    file_contents = deps
-      |> Enum.map(&Resolver.get/1)
-      |> Enum.map(&handle_error/1)
-
-    for {path, contents} <- Enum.zip(normalized, file_contents) do
-      # make directories
-      path
-      |> Path.dirname()
-      |> File.mkdir_p!()
-
-      # write to file
-      File.write(path, contents)
-
-      # install this file's dependencies too
-      install(contents)
-    end
-  end
-
-  defp handle_error({:ok, result}) do
-    result
-  end
-  defp handle_error({:error, reason}) do
-    raise("fail")
+#    # list of remote dependencies
+#    deps = parse(lua)
+#     |> Enum.filter(fn
+#       "github.com" <> _ = path -> true
+#       _ -> false
+#     end)
+#
+#    # list of dependencies, converted to list of file paths
+#    normalized = deps
+#      |> Enum.map(&Installer.normalize/1)
+#
+#    # list of file contents
+#    file_contents = deps
+#      |> Enum.map(&Resolver.get/1)
+#      |> Enum.map(&handle_error/1)
+#
+#    for {path, contents} <- Enum.zip(normalized, file_contents) do
+#      # make directories
+#      path
+#      |> Path.dirname()
+#      |> File.mkdir_p!()
+#
+#      # write to file
+#      File.write(path, contents)
+#
+#      # install this file's dependencies too
+#      install(contents)
+#    end
   end
 end
 
