@@ -12,10 +12,6 @@ defmodule Resolver.FileSystem do
   def get(path) do
     path
     |> Installer.normalize()
-    |> File.read!()
-  rescue
-    f in File.Error -> {:error, f}
-  else
-    result -> {:ok, result}
+    |> File.read()
   end
 end
