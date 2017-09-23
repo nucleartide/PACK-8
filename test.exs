@@ -27,8 +27,18 @@ end
 
 # API ===
 
+defmodule Causer do
+  @callback cause(Exception.t) :: Exception.t
+end
+
 defmodule WrappedError do
+  @behaviour Causer
+
   defexception [:message, :env, :error]
+
+  def cause(%WrappedError{error: error}) do
+    error
+  end
 end
 
 defmodule Error do
@@ -41,6 +51,10 @@ defmodule Error do
       )
     end
   end
+
+  def cause(error) do
+    error.__struct__.cause(error)
+  end
 end
 
 defmodule Program do
@@ -49,6 +63,7 @@ defmodule Program do
   def main() do
     %RuntimeError{message: "shit"}
     |> Error.wrap("hello world")
+    |> Error.cause()
     |> IO.inspect()
   end
 end
