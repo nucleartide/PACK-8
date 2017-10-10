@@ -42,6 +42,7 @@ defmodule Pack8.Mixfile do
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
       {:tesla, "~> 0.7.2"},
       {:httpoison, "~> 0.13"},
+      {:errors, "~> 0.1.0"},
     ]
   end
 end
