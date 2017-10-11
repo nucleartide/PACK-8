@@ -38,15 +38,11 @@ defmodule Installer do
     if err, do: err, else: {:ok, results}
   end
 
-#  @doc """
-#  Install parsed dependencies from a string of Lua code,
-#  only if a dependency doesn't exist.
-#
-#      iex Installer.install("require('github.com/nucleartide/PACK-8/project/main2') require('project/testdir/bar')")
-#      4
-#  """
-#  @spec install(lua :: String.t) :: :ok | {:error, Exception.t}
-#  def install(lua) do
+  @doc """
+  Install parsed dependencies from a string of Lua code.
+  """
+  @spec install(lua :: String.t) :: :ok | {:error, Exception.t}
+  def install(lua) do
 #    with {:ok, files} <- lua |> parse() |> fetch(),
 #
 #         # write _only_ remote dependencies to disk
@@ -72,8 +68,7 @@ defmodule Installer do
 #
 #    # TODO: error handling, make this an auxiliary function
 #    # TODO: handle visited files
-#  end
-end
+  end
 
 # defmodule DFS do
 #   def visit(start, visited \\ MapSet.new()) do
