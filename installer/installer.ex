@@ -1,88 +1,43 @@
-
 defmodule Installer do
-#  import Sigil, only: [sigil_m: 2]
-#
-#  @require ~m/
-#    require
-#    \s*
-#    (?<parens>\()?
-#      \s*
-#      (?<quotes>['"])
-#        (?<path>[^()'"]+)
-#      \k<quotes>
-#      \s*
-#    (?(parens)\))
-#  /
-#
-#  @doc """
-#  Parse out `require` calls from a string of Lua code, and
-#  return their paths.
-#
-#  See https://regex101.com/r/kzY8rx/6 for an explanation of
-#  the regex. Thanks to https://www.twitch.tv/jumpystick for
-#  the help!
-#
-#  TODO: Make regex not transform `require` calls within
-#  comments. Doable with Elixir multiline modifier.
-#
-#  TODO: dynamic requires, won't support
-#
-#      iex> Installer.parse("require('foo') require('bar')")
-#      ["foo", "bar"]
-#
-#  """
-#  @spec parse(String.t) :: [String.t]
-#  def parse(lua) do
-#    @require
-#    |> Regex.scan(lua)
-#    |> Enum.map(fn [_, _, _, path] -> path end)
-#  end
-#
-#  @doc """
-#  Given a list of dependencies, return a list of the
-#  dependencies' content.
-#
-#  If fetching any dependency's content fails, this function
-#  will return the error of the first failing fetch.
-#
-#      iex> Installer.fetch(["github.com/nucleartide/PACK-8/project/main", "project/test"])
-#      4
-#
-#      iex> Installer.fetch(["github.com/doesnt/work", "project/test"])
-#      4
-#
-#  """
-#  @spec fetch(deps :: [String.t]) :: {:ok, [String.t]} | {:error, Exception.t}
-#  def fetch(deps) do
-#    results = deps
-#      |> Enum.map(fn dep ->
-#        Task.async(fn -> Resolver.get(dep) end)
-#      end)
-#      |> Task.yield_many()
-#      |> Enum.map(fn {task, res} ->
-#        # shut down the tasks that didn't reply nor exit
-#        res || Task.shutdown(task, :brutal_kill)
-#      end)
-#      |> Enum.zip(deps)
-#      |> Enum.map(fn
-#        {{:ok, {:ok, result}}, dep} ->
-#          {dep, result}
-#        {{:ok, {:error, _reason} = err}, _dep} ->
-#          err
-#        {{:exit, _reason}, dep} -> # task died
-#          {:error, RuntimeError.exception("failed to fetch #{dep}")}
-#        {nil, dep} -> # task timed out
-#          {:error, RuntimeError.exception("failed to fetch dependency #{dep}")}
-#      end)
-#
-#    err = Enum.find(results, fn
-#      {:error, _} -> true
-#      _           -> false
-#    end)
-#
-#    if err, do: err, else: {:ok, results}
-#  end
-#
+  require Errors
+
+  @doc """
+  Fetch a list of dependencies in parallel.
+
+  If any fetch fails, this function returns the error of the first
+  failing fetch.
+  """
+  @spec fetch(deps :: [String.t]) :: {:ok, [String.t]} | {:error, Exception.t}
+  def fetch(deps) do
+    results = deps
+      |> Enum.map(fn dep ->
+        Task.async(fn -> Resolver.get(dep) end)
+      end)
+      |> Task.yield_many()
+      |> Enum.map(fn {task, res} ->
+        # shut down the tasks that didn't reply nor exit
+        res || Task.shutdown(task, :brutal_kill)
+      end)
+      |> Enum.zip(deps)
+      |> Enum.map(fn
+        {{:ok, {:ok, result}}, _dep} ->
+          result
+        {{:ok, {:error, reason}}, dep} ->
+          {:error, Errors.wrap(reason, "failed to fetch #{dep}")}
+        {{:exit, reason}, dep} ->
+          {:error, Errors.wrap(reason, "failed to fetch #{dep}")}
+        {nil, dep} ->
+          {:error, Errors.new("failed to fetch #{dep} in time")}
+      end)
+
+    err = Enum.find(results, fn
+      {:error, _} -> true
+      _           -> false
+    end)
+
+    if err, do: err, else: {:ok, results}
+  end
+
 #  @doc """
 #  Install parsed dependencies from a string of Lua code,
 #  only if a dependency doesn't exist.

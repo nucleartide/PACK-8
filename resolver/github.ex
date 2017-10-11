@@ -17,7 +17,7 @@ defmodule Resolver.GitHub do
          res = {:ok, _}    <- github_url |> url() |> req() do
       res
     else
-      {:error, e} -> Errors.wrap(e, "couldn't fetch github file")
+      {:error, e} -> {:error, Errors.wrap(e, "couldn't fetch github file")}
     end
   end
 

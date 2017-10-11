@@ -1,4 +1,3 @@
-
 defmodule Main do
   # TODO: improve help output
   def main([]),
