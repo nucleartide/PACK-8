@@ -1,19 +1,18 @@
+# defmodule Resolver.GitHub.PathError do
+#   defexception [:message]
+# 
+#   defp msg(path) do
+#     ~s(path "#{path}" is invalid, format is github.com/<user>/<repo>/<file>)
+#   end
+# 
+#   def exception(path) do
+#     %Resolver.GitHub.PathError{message: msg(path)}
+#   end
+# end
 
-defmodule Resolver.GitHub.PathError do
-  defexception [:message]
-
-  defp msg(path) do
-    ~s(path "#{path}" is invalid, format is github.com/<user>/<repo>/<file>)
-  end
-
-  def exception(path) do
-    %Resolver.GitHub.PathError{message: msg(path)}
-  end
-end
-
-defmodule Resolver.GitHub.Error do
-  @type t :: PathError | HTTPoison.Error
-end
+# defmodule Resolver.GitHub.Error do
+#   @type t :: PathError | HTTPoison.Error
+# end
 
 defmodule Resolver.GitHub do
   @behaviour Resolver

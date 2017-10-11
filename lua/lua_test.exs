@@ -1,6 +1,6 @@
-defmodule Pack8Test do
+defmodule Resolver.LuaTest do
   use ExUnit.Case
-  # doctest Pack8
+  doctest Resolver.Lua
 
 #  test "parse_requires" do
 #    match = Pack8.parse_requires("""
