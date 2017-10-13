@@ -2,6 +2,8 @@ defmodule Installer do
   require Errors
   require Resolver
 
+  @typep lua_file :: {path :: String.t, contents :: String.t}
+
   @doc """
   Fetch a list of dependencies in parallel.
 
@@ -44,18 +46,11 @@ defmodule Installer do
   end
 
   @doc """
-  Install parsed dependencies from a string of Lua code.
+  Given a Lua file represented by `{path, contents}`, install the Lua
+  file's dependencies.
   """
-  @spec install(lua :: String.t) :: :ok | {:error, Exception.t}
-  def install(lua) do
-#         # for each file, install its dependencies too
-#         Enum.each(files, fn {path, contents} ->
-#           install(contents)
-#         end)
-  end
-
-  # Visit a file with `contents` at `path`.
-  defp visit({path, contents}, visited \\ MapSet.new()) do
+  @spec install(lua_file, visited :: MapSet.t) :: :ok | {:error, Exception.t}
+  def install({path, contents}, visited \\ MapSet.new()) do
     deps = Lua.parse(contents)
 
     with {:ok, files} <- deps |> fetch() do
@@ -65,8 +60,16 @@ defmodule Installer do
       |> write()
 
       # update visited map for current node
+      visited = MapSet.put(visited, Lua.normalize(path))
 
       # for each _unvisited_ file, install its dependencies too
+      Enum.reduce(files, visited, fn (f = {path, _contents}, visited) ->
+        if MapSet.member?(visited, Lua.normalize(path)) do
+          visited
+        else
+          install(f, visited)
+        end
+      end)
     else
       {:error, e} -> {:error, Errors.wrap(e, "couldn't install deps")}
     end
@@ -75,7 +78,7 @@ defmodule Installer do
   # Write dependencies to file system.
   defp write(deps) do
     try do
-      Enum.each(fn {path, contents} ->
+      Enum.each(deps, fn {path, contents} ->
         # make directories
         path
         |> Lua.normalize()
@@ -89,20 +92,4 @@ defmodule Installer do
       e in File.Error -> {:error, Errors.wrap(e, "couldn't write file")}
     end
   end
-
-# defmodule DFS do
-#   def visit(start, visited \\ MapSet.new()) do
-#     adj = start
-#       |> File.read!
-#       |> parse_requires
-#     acc = visited |> MapSet.put(start)
-# 
-#     Enum.reduce(adj, acc, fn (n, acc) ->
-#       n = lua_require(n)
-#       new_acc = case MapSet.member?(acc, n) do
-#         true  -> acc
-#         false -> visit(n, acc)
-#       end
-#     end)
-#   end
-# end
+end
