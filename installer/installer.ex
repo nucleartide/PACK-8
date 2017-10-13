@@ -2,8 +2,6 @@ defmodule Installer do
   require Errors
   require Resolver
 
-  @typep lua_file :: {path :: String.t, contents :: String.t}
-
   @doc """
   Fetch a list of dependencies in parallel.
 
@@ -45,20 +43,30 @@ defmodule Installer do
     end
   end
 
+  def install(path) when is_binary(path) do
+    with {:ok, contents} <- Resolver.get(path) do
+      install_deps({path, contents})
+    else
+      {:error, e} -> {:error, Errors.wrap(e, "couldn't read #{path}")}
+    end
+  end
+
   @doc """
-  Given a Lua file represented by `{path, contents}`, install the Lua
-  file's dependencies.
+  Given a Lua file represented by `path`, install the Lua file's
+  dependencies.
   """
-  @spec install(lua_file, visited :: MapSet.t) :: :ok | {:error, Exception.t}
-  def install({path, contents}, visited \\ MapSet.new()) do
+  @spec install_deps(path :: String.t, visited :: MapSet.t) :: :ok | {:error, Exception.t}
+  defp install_deps({path, contents}, visited \\ MapSet.new()) do
     deps = Lua.parse(contents)
 
-    with {:ok, files} <- deps |> fetch() do
-      # write _only_ remote dependencies to the file system
-      files
-      |> Enum.filter(fn {path, _} -> Resolver.is_remote?(path) end)
-      |> write()
+         # fetch dependencies
+    with {:ok, files} <- deps |> fetch(),
 
+         # write _only_ remote dependencies to the file system
+         :ok <- files
+           |> Enum.filter(fn {path, _} -> Resolver.is_remote?(path) end)
+           |> write()
+    do
       # update visited map for current node
       visited = MapSet.put(visited, Lua.normalize(path))
 
@@ -67,7 +75,7 @@ defmodule Installer do
         if MapSet.member?(visited, Lua.normalize(path)) do
           visited
         else
-          install(f, visited)
+          install_deps(f, visited)
         end
       end)
     else
@@ -79,15 +87,19 @@ defmodule Installer do
   defp write(deps) do
     try do
       Enum.each(deps, fn {path, contents} ->
+        # normalize path
+        path = Lua.normalize(path)
+
         # make directories
         path
-        |> Lua.normalize()
         |> Path.dirname()
         |> File.mkdir_p!()
 
         # write to file
         File.write!(path, contents)
       end)
+
+      :ok
     rescue
       e in File.Error -> {:error, Errors.wrap(e, "couldn't write file")}
     end

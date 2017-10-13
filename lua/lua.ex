@@ -34,6 +34,8 @@ defmodule Lua do
   """
   @spec normalize(path :: String.t) :: String.t
   def normalize(path) do
+    IO.puts("normalize: #{path}")
+
     path
     |> String.replace(".", "/")
     |> (fn p -> "./#{p}.lua" end).()
