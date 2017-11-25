@@ -1,5 +1,7 @@
 # Pack
 
+## Note: this project is no longer being developed; please use [picotool](https://github.com/dansanderson/picotool#packages-and-the-require-function)'s `require` function instead.
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
